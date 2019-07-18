@@ -1,0 +1,186 @@
+package otobus;
+
+// Dört varlık var: Otobüs, koltuk, insan ve bilet. Kim kimin sahibi?
+
+// OTOBÜS SINIFI
+public class Otobus {
+public enum cinsiyet {kadın, erkek;}
+public enum konum {cam, koridor;}
+public enum tur{ogrenci,tam,vip;}
+
+int kasa;
+Koltuk[] yer = new Koltuk[50];
+Bilet[] no  = new Bilet[50];
+
+public Otobus() {
+// Otobüs yapılandırıcısı. İlk değerleri vermek ve boş olarak kapasite kadar koltuk nesnesi üretmek için
+this.kasa = 0;
+
+for(int i=0; i<50; i++) {
+this.yer[i] = new Koltuk(i,((i%2==0)?konum.cam:konum.koridor),100);
+this.no[i] = new Bilet();
+}
+}
+
+public void paraKazan(int p) { this.kasa += p;}
+public int kasaRaporu() {return this.kasa;}
+
+public Koltuk yanKoltuk(Koltuk k) {
+// Otobüsteki toplam koltuk sayısının çift sayı olduğu kabul ediliyor 
+return ((k.numaranNe()%2==0)?this.koltukGetir(k.numaranNe()-1):this.koltukGetir(k.numaranNe()+1)); 
+}
+
+public boolean cinsiyetUygunMu(Koltuk k, Yolcu y) {
+// Yan koltuk doluysa ve oturan bayansa cinsiyetin uygunluğunun kontrol edilmesi isteniyor
+boolean sonuc=true;
+if(this.yanKoltuk(k).bosMusun()==false){
+    if(y.cinsinNe()==cinsiyet.erkek && this.yanKoltuk(k).sahibinKim().cinsinNe()==cinsiyet.kadın){
+        sonuc=false;}
+    if(y.cinsinNe()==cinsiyet.kadın && this.yanKoltuk(k).sahibinKim().cinsinNe()==cinsiyet.erkek){
+       sonuc=false;}
+}
+return sonuc;
+}
+
+public void koltukSat(int kNo, Yolcu y, tur tur,konum konum) {
+// Koltuk satışı yapılıyor
+if ((this.koltukGetir(kNo).bosMusun()) && (cinsiyetUygunMu(this.koltukGetir(kNo),y))) {
+    if(tur.tam ==tur && konum.koridor==konum){
+    if(y.paranYeterMi(this.koltukGetir(kNo).fiyatNe())==true){
+y.paraHarca(this.koltukGetir(kNo).fiyatNe());
+this.koltukGetir(kNo).sahiplen(y);
+this.paraKazan(this.koltukGetir(kNo).fiyatNe());}
+}
+    
+    else if(tur.tam ==tur && konum.cam==konum){
+        if(y.paranYeterMi(this.koltukGetir(kNo).fiyatNe()+50)==true){
+y.paraHarca(this.koltukGetir(kNo).fiyatNe()+50);
+this.koltukGetir(kNo).sahiplen(y);
+this.paraKazan(this.koltukGetir(kNo).fiyatNe()+50);}
+}
+    
+    else if(tur.ogrenci ==tur && konum.koridor==konum){
+        if(y.paranYeterMi(this.koltukGetir(kNo).fiyatNe()-50)==true){
+y.paraHarca(this.koltukGetir(kNo).fiyatNe()-50);
+this.koltukGetir(kNo).sahiplen(y);
+this.paraKazan(this.koltukGetir(kNo).fiyatNe()-50);}
+}    
+    
+    else if(tur.ogrenci ==tur && konum.cam==konum){
+        if(y.paranYeterMi(this.koltukGetir(kNo).fiyatNe()-50+50)==true){
+y.paraHarca(this.koltukGetir(kNo).fiyatNe()-50+50);
+this.koltukGetir(kNo).sahiplen(y);
+this.paraKazan(this.koltukGetir(kNo).fiyatNe()-50+50);}
+}
+    
+    else if(tur.vip ==tur && konum.koridor==konum){
+        if(y.paranYeterMi(this.koltukGetir(kNo).fiyatNe()+50)==true){
+y.paraHarca(this.koltukGetir(kNo).fiyatNe()+50);
+this.koltukGetir(kNo).sahiplen(y);
+this.paraKazan(this.koltukGetir(kNo).fiyatNe()+50);}
+}
+    
+    else if(tur.vip ==tur && konum.cam==konum){
+        if(y.paranYeterMi(this.koltukGetir(kNo).fiyatNe()+50+50)==true){
+y.paraHarca(this.koltukGetir(kNo).fiyatNe()+50+50);
+this.koltukGetir(kNo).sahiplen(y);
+this.paraKazan(this.koltukGetir(kNo).fiyatNe()+50+50);}
+}
+this.biletGetir(kNo).biletÜret(y, yer[kNo]);
+    no[kNo].biletYazdir();
+}
+}
+
+public Koltuk koltukGetir(int i) { return yer[i];} //Numarası verilen koltuk nesnesini getirir.
+public Bilet biletGetir(int i) { return no[i];}
+
+// YOLCU SINIFI 
+public static class Yolcu {
+private String ad;
+private int para;
+private cinsiyet cins;
+
+public Yolcu(String a, int p, cinsiyet c) {
+// Yolcu sınıfı yapılandırıcısı. İlk değerlerini atamak için
+this.ad = a;
+this.para = p;
+this.cins = c;
+}
+
+public String adinNe() { return this.ad; } // Yolcunun adını döndürür
+public int kacParanVar() { return this.para;} // Yolcunun kaç lirası olduğu bilgisini döndürür. Bu bilgi koltuk satışında önemli.
+public cinsiyet cinsinNe() { return this.cins;} // Yolcunun cinsiyetini döndürür. Bu bilgi koltuk satışında önemli.
+
+public void adinBuOlsun(String ad) { this.ad = ad; } // Standart setter. Yolcunun adını değiştirir.
+public void paraKazan(int p) { this.para += p; } // Yolcuya para kazandıran setter.
+public boolean paranYeterMi(int p){ boolean sonuc=true; if(this.para<p){sonuc=false;} return sonuc; } // Yapılacak bir harcama miktarı için yolcunun parasının miktarını sorgular.
+public void paraHarca(int p) { if (paranYeterMi(p)) this.para -= p;} // Yolcuya para harcattırır, parasından çıkış yaptırır.
+public void cinsDegis(cinsiyet c) { this.cins = c;} // Hatalı girişleri düzeltmek için yolcunun cinsiyet bilgisini değiştirir.
+}
+
+
+// KOLTUK SINIFI
+public static class Koltuk {
+private int no;
+private konum yer;
+private int fiyat;
+private Yolcu sahip = null;
+
+public Koltuk(int n, konum k, int f) {
+// Koltuğun ilk değerlerini atayan yapılandırıcı.
+this.no = n;
+this.yer = k;
+this.fiyat = f;
+}
+
+public int numaranNe() { return this.no;} // Koltuk numarasını getiren standart getter.
+public konum yerinNe() { return this.yer;} // Koltuğun konumunu (pencere, koridor) getiren ve enum kullanan standart getter.
+public int fiyatNe() { return this.fiyat;} // Koltuk fiyatını döndüren standart getter. Her koltuk için özel fiyat nasıl tanımlanır?
+
+public void numaraDegis(int n) { this.no = n;} // Koltuk numarasını değiştiren standart setter.
+public void yerDegis(konum k) {this.yer = k;} // Koltuk konumunu değiştiren standart setter.
+public boolean bosMusun() { return (this.sahip==null); } // Koltuğun satılmış olup olmadığını test eden getter.
+public Yolcu sahibinKim() { return this.sahip;} // Koltuğun sahibine ulaşıp döndüren getter.
+public void sahiplen(Yolcu y) { this.sahip = y;} // Bir yolcuyu koltuğa sahipleyen setter.
+}
+
+// BİLET SINIFI
+public static class Bilet {
+    private Yolcu sahip;
+    private Koltuk koltuk;
+    
+    public Bilet(){}
+    
+    public String adınNe(){return this.sahip.ad;}
+    public int no(){return this.koltuk.no;}
+    
+    public void degisSahip(Yolcu sahip){this.sahip=sahip;}
+    public void degisKoltuk(Koltuk koltuk){this.koltuk=koltuk;}
+       
+    public void biletÜret(Yolcu y, Koltuk k){
+        this.sahip=y;
+        this.koltuk=k;
+    }
+    
+    public void biletYazdir(){
+      System.out.println(this.sahip.ad+" isimli kişinin koltuk numarası ("+this.koltuk.no+   ")");
+    }
+}
+
+
+// Ve perde...	
+public static void main(String[] args) {
+
+Yolcu ins1 = new Yolcu("Mualla",1000,cinsiyet.kadın);
+Yolcu ins2 = new Yolcu("Oğuzhan",500,cinsiyet.erkek);
+
+Otobus oto = new Otobus();
+
+oto.koltukSat(5, ins1, tur.vip, konum.cam);
+oto.koltukSat(6, ins2, tur.tam, konum.koridor);
+
+System.out.println(oto.koltukGetir(5).sahibinKim().adinNe());
+System.out.println(oto.kasaRaporu());
+}
+
+}
